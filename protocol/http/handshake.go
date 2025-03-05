@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/getlantern/algeneva"
+
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/atomic"
 	"github.com/sagernet/sing/common/auth"
@@ -30,8 +32,41 @@ func HandleConnectionEx(
 	source M.Socksaddr,
 	onClose N.CloseHandlerFunc,
 ) error {
+	return handleConnectionEx(ctx, conn, reader, authenticator, handler, source, onClose, false)
+}
+
+func HandleGenevaConnectionEx(
+	ctx context.Context,
+	conn net.Conn,
+	reader *std_bufio.Reader,
+	authenticator *auth.Authenticator,
+	handler N.TCPConnectionHandlerEx,
+	source M.Socksaddr,
+	onClose N.CloseHandlerFunc,
+) error {
+	return handleConnectionEx(ctx, conn, reader, authenticator, handler, source, onClose, true)
+}
+
+func handleConnectionEx(
+	ctx context.Context,
+	conn net.Conn,
+	reader *std_bufio.Reader,
+	authenticator *auth.Authenticator,
+	handler N.TCPConnectionHandlerEx,
+	source M.Socksaddr,
+	onClose N.CloseHandlerFunc,
+	useGeneva bool,
+) error {
 	for {
-		request, err := ReadRequest(reader)
+		var (
+			request *http.Request
+			err     error
+		)
+		if useGeneva {
+			request, err = algeneva.ReadRequest(reader)
+		} else {
+			request, err = ReadRequest(reader)
+		}
 		if err != nil {
 			return E.Cause(err, "read http request")
 		}
