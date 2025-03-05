@@ -1,4 +1,4 @@
-module github.com/sagernet/sing
+module github.com/getlantern/sing
 
 go 1.21
 
